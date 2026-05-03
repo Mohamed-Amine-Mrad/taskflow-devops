@@ -7,11 +7,11 @@ on:
     branches: [main]
 
 jobs:
-  backend-ci:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -24,16 +24,56 @@ jobs:
           cd backend
           npm ci
 
-      - name: Run backend lint
+      - name: Lint backend
         run: |
           cd backend
           npm run lint
 
-      - name: Run backend tests
+      - name: Test backend
         run: |
           cd backend
           npm test
 
-      - name: Build backend Docker image
+      - name: Install frontend dependencies
         run: |
-          docker build -t medaminemrad/taskflow-backend:latest ./backend
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build backend Docker image
+        run: docker build -t medaminemrad/taskflow-backend:latest ./backend
+
+      - name: Build frontend Docker image
+        run: docker build -t medaminemrad/taskflow-frontend:latest ./frontend
+
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: medaminemrad/taskflow-backend:latest
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          ignore-unfixed: true
+
+      - name: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: medaminemrad/taskflow-frontend:latest
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          ignore-unfixed: true
+
+      - name: Push backend Docker image
+        run: docker push medaminemrad/taskflow-backend:latest
+
+      - name: Push frontend Docker image
+        run: docker push medaminemrad/taskflow-frontend:latest
