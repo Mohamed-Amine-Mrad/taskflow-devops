@@ -2,32 +2,50 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API = "http://localhost:5000";
+const API = "/api";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
 
   const fetchTasks = async () => {
-    const res = await axios.get(`${API}/tasks`);
-    setTasks(res.data);
+    try {
+      const res = await axios.get(`${API}/tasks`);
+      setTasks(res.data);
+      setError("");
+    } catch (err) {
+      setError("Backend is not reachable. Start backend port-forward to enable tasks.");
+    }
   };
 
   const addTask = async () => {
     if (!title.trim()) return;
-    await axios.post(`${API}/tasks`, { title });
-    setTitle("");
-    fetchTasks();
+    try {
+      await axios.post(`${API}/tasks`, { title });
+      setTitle("");
+      fetchTasks();
+    } catch (err) {
+      setError("Cannot add task because backend is not reachable.");
+    }
   };
 
   const completeTask = async (id) => {
-    await axios.put(`${API}/tasks/${id}/done`);
-    fetchTasks();
+    try {
+      await axios.put(`${API}/tasks/${id}/done`);
+      fetchTasks();
+    } catch (err) {
+      setError("Cannot update task.");
+    }
   };
 
   const deleteTask = async (id) => {
-    await axios.delete(`${API}/tasks/${id}`);
-    fetchTasks();
+    try {
+      await axios.delete(`${API}/tasks/${id}`);
+      fetchTasks();
+    } catch (err) {
+      setError("Cannot delete task.");
+    }
   };
 
   useEffect(() => {
@@ -43,31 +61,23 @@ function App() {
           <div>
             <p className="eyebrow">DevOps Mini Project</p>
             <h1>TaskFlow</h1>
-            <p className="subtitle">A simple task manager deployed through a complete DevOps pipeline.</p>
+            <p className="subtitle">A task manager deployed with Docker, Kubernetes, GitHub Actions and ArgoCD.</p>
           </div>
           <div className="badge">CI/CD Ready</div>
         </div>
 
+        {error && <p className="empty">{error}</p>}
+
         <div className="stats">
-          <div>
-            <span>{tasks.length}</span>
-            <p>Total tasks</p>
-          </div>
-          <div>
-            <span>{completed}</span>
-            <p>Completed</p>
-          </div>
-          <div>
-            <span>{tasks.length - completed}</span>
-            <p>Pending</p>
-          </div>
+          <div><span>{tasks.length}</span><p>Total tasks</p></div>
+          <div><span>{completed}</span><p>Completed</p></div>
+          <div><span>{tasks.length - completed}</span><p>Pending</p></div>
         </div>
 
         <div className="form">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addTask()}
             placeholder="Add a new task..."
           />
           <button onClick={addTask}>Add Task</button>
@@ -75,7 +85,7 @@ function App() {
 
         <div className="taskList">
           {tasks.length === 0 ? (
-            <p className="empty">No tasks yet. Add your first one.</p>
+            <p className="empty">No tasks yet.</p>
           ) : (
             tasks.map((task) => (
               <div className={task.done ? "task done" : "task"} key={task.id}>
