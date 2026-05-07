@@ -37,24 +37,34 @@ The project includes:
 - Grafana
 
 ---
+## Code Quality & Security
+
+The project integrates DevSecOps practices using:
+
+- SonarCloud for source code quality analysis
+- Trivy for Docker image vulnerability scanning
+
+Both tools are integrated directly into the GitHub Actions CI/CD pipeline.
 
 # Project Architecture
 
 ```text
-Developer Push
-       ↓
-GitHub Repository
-       ↓
-GitHub Actions CI/CD
-       ↓
-Docker Image Build
-       ↓
-DockerHub Registry
-       ↓
-Kubernetes Cluster (Minikube)
-       ↓
-ArgoCD GitOps Deployment
-       ↓
-Prometheus Monitoring
-       ↓
-Grafana Dashboard
+Developer
+   ↓
+GitHub
+   ↓
+GitHub Actions
+   ↓
+SonarCloud Analysis
+   ↓
+Docker Build
+   ↓
+Trivy Security Scan
+   ↓
+DockerHub
+   ↓
+ArgoCD
+   ↓
+Kubernetes
+   ↓
+Prometheus + Grafana
